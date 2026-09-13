@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Net Worth">
+<meta name="theme-color" content="#ffffff">
+<title>Net Worth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0A0A0A;
+    --paper: #FFFFFF;
+    --accent: #C41E1E;
+    --rule: #0A0A0A;
+    --rule-faint: rgba(10,10,10,0.14);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  .frame {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  h1 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+
+  .subhead {
+    font-size: 17px;
+    font-style: italic;
+    color: rgba(10,10,10,0.55);
+    margin: 0;
+  }
+
+  .ledger {
+    border-top: 2px solid var(--rule);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule-faint);
+  }
+
+  .row .name {
+    font-size: 19px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .row .amount {
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .row .amount.negative {
+    color: var(--accent);
+  }
+
+  .row .delete {
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: none;
+    color: rgba(10,10,10,0.32);
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .row .delete:active { color: var(--accent); }
+
+  body.editing .row .delete { display: flex; }
+  body.editing .row { grid-template-columns: 1fr auto 22px; }
+
+  .row input {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 19px;
+    border: none;
+    background: none;
+    color: var(--ink);
+    padding: 0;
+    width: 100%;
+    outline: none;
+  }
+
+  .row input.amount-input {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    padding-top: 22px;
+    margin-top: 6px;
+    border-top: 3px double var(--rule);
+  }
+
+  .total-row .label {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .total-row .value {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 26px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total-row .value.negative { color: var(--accent); }
+
+  .controls {
+    display: flex;
+    gap: 20px;
+    margin-top: 36px;
+  }
+
+  .add-btn, .edit-toggle {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 17px;
+    font-style: italic;
+    background: none;
+    border: none;
+    color: var(--ink);
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(10,10,10,0.3);
+  }
+
+  .add-btn { color: var(--accent); text-decoration-color: rgba(196,30,30,0.4); }
+
+  .empty {
+    padding: 40px 0;
+    font-style: italic;
+    color: rgba(10,10,10,0.45);
+    font-size: 17px;
+  }
+
+  .updated {
+    margin-top: 48px;
+    font-size: 13px;
+    color: rgba(10,10,10,0.4);
+    font-style: italic;
+  }
+
+  .history-section {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 2px solid var(--rule);
+  }
+
+  .history-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .history-head h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .snapshot-btn {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 17px;
+    font-style: italic;
+    background: none;
+    border: none;
+    color: var(--accent);
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(196,30,30,0.4);
+  }
+
+  .chart-wrap {
+    margin-top: 28px;
+  }
+
+  .chart-wrap svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  .chart-empty {
+    font-style: italic;
+    color: rgba(10,10,10,0.45);
+    font-size: 16px;
+    padding: 20px 0 4px;
+  }
+
+  .snap-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: baseline;
+    gap: 10px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--rule-faint);
+  }
+
+  .snap-row .snap-date {
+    font-size: 17px;
+  }
+
+  .snap-row .snap-delta {
+    font-size: 14px;
+    font-style: italic;
+    color: rgba(10,10,10,0.45);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .snap-row .snap-delta.positive { color: #146B2E; }
+  .snap-row .snap-delta.negative { color: var(--accent); }
+
+  .snap-row .snap-total {
+    font-size: 17px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .snap-row .snap-total.negative { color: var(--accent); }
+
+  .snap-row .delete {
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: none;
+    color: rgba(10,10,10,0.32);
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body.editing .snap-row { grid-template-columns: 1fr auto auto 22px; }
+  body.editing .snap-row .delete { display: flex; }
+
+  .history-list {
+    margin-top: 8px;
+  }
+
+  .backup-section {
+    margin-top: 56px;
+    padding-top: 28px;
+    border-top: 1px solid var(--rule-faint);
+  }
+
+  .backup-section h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+
+  .backup-note {
+    font-size: 15px;
+    font-style: italic;
+    color: rgba(10,10,10,0.5);
+    margin: 0 0 16px;
+  }
+
+  .backup-controls {
+    display: flex;
+    gap: 20px;
+  }
+
+  .backup-btn {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 17px;
+    font-style: italic;
+    background: none;
+    border: none;
+    color: var(--ink);
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(10,10,10,0.3);
+  }
+
+  .backup-status {
+    margin-top: 14px;
+    font-size: 13px;
+    color: rgba(10,10,10,0.45);
+    font-style: italic;
+    min-height: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <h1>NET WORTH</h1>
+    <p class="subhead" id="today"></p>
+  </header>
+
+  <div class="ledger" id="ledger"></div>
+
+  <div class="total-row">
+    <div class="label">Total</div>
+    <div class="value" id="total">$0.00</div>
+  </div>
+
+  <div class="controls">
+    <button class="add-btn" id="addBtn">+ Add account</button>
+    <button class="edit-toggle" id="editBtn">Edit</button>
+  </div>
+
+  <p class="updated" id="updated"></p>
+
+  <div class="history-section">
+    <div class="history-head">
+      <h2>History</h2>
+      <button class="snapshot-btn" id="snapshotBtn">+ Save snapshot</button>
+    </div>
+    <div class="chart-wrap" id="chartWrap"></div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <div class="backup-section">
+    <h2>Backup</h2>
+    <p class="backup-note">Export saves everything below to a CSV file you can keep in iCloud Drive. Import replaces this app's data with what's in a CSV file you choose.</p>
+    <div class="backup-controls">
+      <button class="backup-btn" id="exportBtn">Export CSV</button>
+      <button class="backup-btn" id="importBtn">Import CSV</button>
+      <input type="file" id="importFile" accept=".csv,text/csv" style="display:none">
+    </div>
+    <p class="backup-status" id="backupStatus"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'networth-accounts-v1';
+  const ledgerEl = document.getElementById('ledger');
+  const totalEl = document.getElementById('total');
+  const addBtn = document.getElementById('addBtn');
+  const editBtn = document.getElementById('editBtn');
+  const updatedEl = document.getElementById('updated');
+  const todayEl = document.getElementById('today');
+
+  let editing = false;
+
+  todayEl.textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const DEFAULT_ACCOUNTS = [];
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return DEFAULT_ACCOUNTS.map(a => ({ ...a }));
+      return JSON.parse(raw);
+    } catch (e) {
+      return DEFAULT_ACCOUNTS.map(a => ({ ...a }));
+    }
+  }
+
+  function save(accounts) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+    updatedEl.textContent = 'Last edited ' + new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  function formatMoney(n) {
+    const abs = Math.abs(n);
+    const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (n < 0 ? '-$' : '$') + formatted;
+  }
+
+  function parseMoneyInput(str) {
+    const cleaned = str.replace(/[^0-9.\-]/g, '');
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? 0 : n;
+  }
+
+  let accounts = load();
+
+  function render() {
+    ledgerEl.innerHTML = '';
+    document.body.classList.toggle('editing', editing);
+    editBtn.textContent = editing ? 'Done' : 'Edit';
+
+    if (accounts.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'No accounts yet. Add your first one below.';
+      ledgerEl.appendChild(empty);
+    }
+
+    accounts.forEach((acct, i) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const nameEl = document.createElement(editing ? 'input' : 'div');
+      nameEl.className = 'name';
+      if (editing) {
+        nameEl.value = acct.name;
+        nameEl.placeholder = 'Account name';
+        nameEl.addEventListener('input', (e) => {
+          accounts[i].name = e.target.value;
+          save(accounts);
+        });
+      } else {
+        nameEl.textContent = acct.name || '(untitled)';
+      }
+
+      const amountEl = document.createElement(editing ? 'input' : 'div');
+      amountEl.className = 'amount' + (acct.amount < 0 ? ' negative' : '');
+      if (editing) {
+        amountEl.classList.add('amount-input');
+        amountEl.value = acct.amount === 0 && acct._raw === undefined ? '' : acct.amount;
+        amountEl.placeholder = '0.00';
+        amountEl.inputMode = 'decimal';
+        amountEl.addEventListener('input', (e) => {
+          accounts[i]._raw = e.target.value;
+          accounts[i].amount = parseMoneyInput(e.target.value);
+          totalEl.textContent = formatMoney(total());
+          totalEl.classList.toggle('negative', total() < 0);
+          save(accounts);
+        });
+        amountEl.addEventListener('blur', () => { delete accounts[i]._raw; render(); });
+      } else {
+        amountEl.textContent = formatMoney(acct.amount);
+      }
+
+      row.appendChild(nameEl);
+      row.appendChild(amountEl);
+
+      if (editing) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete';
+        delBtn.setAttribute('aria-label', 'Delete account');
+        delBtn.textContent = '\u00D7';
+        delBtn.addEventListener('click', () => {
+          accounts.splice(i, 1);
+          save(accounts);
+          render();
+        });
+        row.appendChild(delBtn);
+      }
+
+      ledgerEl.appendChild(row);
+    });
+
+    totalEl.textContent = formatMoney(total());
+    totalEl.classList.toggle('negative', total() < 0);
+
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      updatedEl.textContent = 'Last edited ' + new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } else {
+      updatedEl.textContent = '';
+    }
+  }
+
+  function total() {
+    return accounts.reduce((sum, a) => sum + (a.amount || 0), 0);
+  }
+
+  addBtn.addEventListener('click', () => {
+    accounts.push({ name: '', amount: 0 });
+    editing = true;
+    save(accounts);
+    render();
+    const inputs = ledgerEl.querySelectorAll('.name');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  editBtn.addEventListener('click', () => {
+    editing = !editing;
+    render();
+    renderHistory();
+  });
+
+  // ---- Snapshot history ----
+  const HISTORY_KEY = 'networth-history-v1';
+  const snapshotBtn = document.getElementById('snapshotBtn');
+  const chartWrap = document.getElementById('chartWrap');
+  const historyList = document.getElementById('historyList');
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory(history) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+
+  let history = loadHistory();
+
+  function formatDate(ts) {
+    return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function buildChart() {
+    const sorted = [...history].sort((a, b) => a.date - b.date);
+    if (sorted.length < 2) {
+      chartWrap.innerHTML = '<p class="chart-empty">Save at least two snapshots to see movement over time.</p>';
+      return;
+    }
+
+    const totals = sorted.map(h => h.total);
+    const rawMin = Math.min(...totals);
+    const rawMax = Math.max(...totals);
+    const pad = Math.max((rawMax - rawMin) * 0.15, 1);
+    const min = rawMin - pad;
+    const max = rawMax + pad;
+
+    const W = 472, H = 150, TOP = 10, BOTTOM = 28;
+    const plotH = H - TOP - BOTTOM;
+
+    const xFor = i => sorted.length === 1 ? 0 : (i / (sorted.length - 1)) * W;
+    const yFor = v => TOP + plotH - ((v - min) / (max - min)) * plotH;
+
+    let path = '';
+    sorted.forEach((h, i) => {
+      const x = xFor(i), y = yFor(h.total);
+      path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    });
+
+    let zeroLine = '';
+    if (min < 0 && max > 0) {
+      const zy = yFor(0);
+      zeroLine = '<line x1="0" y1="' + zy.toFixed(1) + '" x2="' + W + '" y2="' + zy.toFixed(1) + '" stroke="rgba(10,10,10,0.25)" stroke-width="1" stroke-dasharray="2,3" />';
+    }
+
+    let markers = '';
+    sorted.forEach((h, i) => {
+      const x = xFor(i), y = yFor(h.total);
+      const fill = h.total < 0 ? '#C41E1E' : '#0A0A0A';
+      markers += '<rect x="' + (x - 3).toFixed(1) + '" y="' + (y - 3).toFixed(1) + '" width="6" height="6" fill="' + fill + '" />';
+    });
+
+    const firstLabel = formatDate(sorted[0].date);
+    const lastLabel = formatDate(sorted[sorted.length - 1].date);
+
+    const svg =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
+        zeroLine +
+        '<path d="' + path.trim() + '" fill="none" stroke="#0A0A0A" stroke-width="1.5" />' +
+        markers +
+        '<text x="0" y="' + (H - 6) + '" font-family="EB Garamond, Georgia, serif" font-style="italic" font-size="12" fill="rgba(10,10,10,0.5)">' + firstLabel + '</text>' +
+        '<text x="' + W + '" y="' + (H - 6) + '" text-anchor="end" font-family="EB Garamond, Georgia, serif" font-style="italic" font-size="12" fill="rgba(10,10,10,0.5)">' + lastLabel + '</text>' +
+      '</svg>';
+
+    chartWrap.innerHTML = svg;
+  }
+
+  function renderHistory() {
+    buildChart();
+
+    historyList.innerHTML = '';
+    if (history.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'chart-empty';
+      empty.textContent = 'No snapshots saved yet.';
+      historyList.appendChild(empty);
+      return;
+    }
+
+    const sortedDesc = [...history].sort((a, b) => b.date - a.date);
+
+    sortedDesc.forEach((h) => {
+      const row = document.createElement('div');
+      row.className = 'snap-row';
+
+      const dateEl = document.createElement('div');
+      dateEl.className = 'snap-date';
+      dateEl.textContent = formatDate(h.date);
+
+      const olderSameOrder = [...history].sort((a, b) => a.date - b.date);
+      const idx = olderSameOrder.findIndex(x => x.date === h.date);
+      const prev = idx > 0 ? olderSameOrder[idx - 1] : null;
+
+      const deltaEl = document.createElement('div');
+      deltaEl.className = 'snap-delta';
+      if (prev) {
+        const diff = h.total - prev.total;
+        deltaEl.textContent = (diff >= 0 ? '+' : '') + formatMoney(diff);
+        deltaEl.classList.add(diff >= 0 ? 'positive' : 'negative');
+      } else {
+        deltaEl.textContent = '';
+      }
+
+      const totalEl2 = document.createElement('div');
+      totalEl2.className = 'snap-total' + (h.total < 0 ? ' negative' : '');
+      totalEl2.textContent = formatMoney(h.total);
+
+      row.appendChild(dateEl);
+      row.appendChild(deltaEl);
+      row.appendChild(totalEl2);
+
+      if (editing) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete';
+        delBtn.setAttribute('aria-label', 'Delete snapshot');
+        delBtn.textContent = '\u00D7';
+        delBtn.addEventListener('click', () => {
+          history = history.filter(x => x.date !== h.date);
+          saveHistory(history);
+          renderHistory();
+        });
+        row.appendChild(delBtn);
+      }
+
+      historyList.appendChild(row);
+    });
+  }
+
+  snapshotBtn.addEventListener('click', () => {
+    history.push({
+      date: Date.now(),
+      total: total(),
+      accounts: accounts.map(a => ({ name: a.name, amount: a.amount }))
+    });
+    saveHistory(history);
+    renderHistory();
+  });
+
+  // ---- CSV backup (export / import) ----
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFile = document.getElementById('importFile');
+  const backupStatus = document.getElementById('backupStatus');
+
+  function csvField(v) {
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function toISODate(ts) {
+    return new Date(ts).toISOString().slice(0, 10);
+  }
+
+  function buildCSV() {
+    const rows = [['snapshot_date', 'account', 'amount']];
+    accounts.forEach(a => rows.push(['current', a.name, a.amount]));
+    [...history].sort((a, b) => a.date - b.date).forEach(h => {
+      h.accounts.forEach(a => rows.push([toISODate(h.date), a.name, a.amount]));
+    });
+    return rows.map(r => r.map(csvField).join(',')).join('\n');
+  }
+
+  function parseCSV(text) {
+    const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim().length > 0);
+    const rows = lines.map(line => {
+      const out = [];
+      let cur = '', inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (inQuotes) {
+          if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+          else if (c === '"') { inQuotes = false; }
+          else { cur += c; }
+        } else {
+          if (c === '"') inQuotes = true;
+          else if (c === ',') { out.push(cur); cur = ''; }
+          else cur += c;
+        }
+      }
+      out.push(cur);
+      return out;
+    });
+    return rows;
+  }
+
+  exportBtn.addEventListener('click', () => {
+    const csv = buildCSV();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'net-worth-' + toISODate(Date.now()) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    backupStatus.textContent = 'Exported ' + a.download + ' — choose "Save to Files" to put it in iCloud Drive.';
+  });
+
+  importBtn.addEventListener('click', () => importFile.click());
+
+  importFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const rows = parseCSV(reader.result);
+        const header = rows[0].map(h => h.trim().toLowerCase());
+        const dateIdx = header.indexOf('snapshot_date');
+        const nameIdx = header.indexOf('account');
+        const amountIdx = header.indexOf('amount');
+        if (dateIdx === -1 || nameIdx === -1 || amountIdx === -1) {
+          throw new Error('Missing expected columns');
+        }
+
+        const groups = {};
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (r.length < 3) continue;
+          const key = r[dateIdx].trim();
+          if (!groups[key]) groups[key] = [];
+          const amt = parseFloat(r[amountIdx]);
+          groups[key].push({ name: r[nameIdx], amount: isNaN(amt) ? 0 : amt });
+        }
+
+        if (groups['current']) {
+          accounts = groups['current'];
+          delete groups['current'];
+        }
+
+        history = Object.keys(groups).map(dateStr => {
+          const ts = new Date(dateStr + 'T12:00:00').getTime();
+          const accts = groups[dateStr];
+          return {
+            date: isNaN(ts) ? Date.now() : ts,
+            accounts: accts,
+            total: accts.reduce((s, a) => s + a.amount, 0)
+          };
+        });
+
+        save(accounts);
+        saveHistory(history);
+        render();
+        renderHistory();
+        backupStatus.textContent = 'Imported ' + file.name + ' successfully.';
+      } catch (err) {
+        backupStatus.textContent = 'Could not read that CSV — check it matches the exported format.';
+      }
+      importFile.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  render();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
